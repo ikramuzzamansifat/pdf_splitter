@@ -19,9 +19,15 @@ This Flask-based web application allows users to upload a large PDF file (Upto 1
     ```
 
 2. Create a virtual environment and activate it:
+    ##### On Linux
     ```sh
-    python -m venv venv
-    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+    ##### On Windows
+    ```sh
+    python3 -m venv venv
+    venv\Scripts\activate
     ```
 
 3. Install the required dependencies listed in `requirements.txt`:
