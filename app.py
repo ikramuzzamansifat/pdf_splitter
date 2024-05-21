@@ -6,7 +6,9 @@ from pypdf import PdfReader, PdfWriter
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # Maximum upload size of 100 MB
+app.config['MAX_CONTENT_LENGTH'] = 150 * 1024 * 1024  # Maximum upload size of 100 MB
+input_base_name = ''
+
 
 def clear_output_folder(folder):
     if os.path.exists(folder):
@@ -18,8 +20,11 @@ def clear_output_folder(folder):
         os.makedirs(folder, exist_ok=True)
 
 def split_pdf_by_size(input_pdf_path, output_folder, max_size_mb):
-    max_size_bytes = max_size_mb * 1024 * 1024
+    max_size_bytes = max_size_mb * 1000 * 1000
     os.makedirs(output_folder, exist_ok=True)  # Ensure the output folder exists
+
+    global input_base_name
+    input_base_name = os.path.splitext(os.path.basename(input_pdf_path))[0]
     
     with open(input_pdf_path, "rb") as input_pdf_file:
         pdf_reader = PdfReader(input_pdf_file)
@@ -38,7 +43,8 @@ def split_pdf_by_size(input_pdf_path, output_folder, max_size_mb):
             
             if current_size > max_size_bytes:
                 current_writer.remove_page(len(current_writer.pages) - 1)
-                output_pdf_path = os.path.join(output_folder, f"output_{part_number}.pdf")
+
+                output_pdf_path = os.path.join(output_folder, f"{input_base_name}_part_{part_number}.pdf")
                 with open(output_pdf_path, "wb") as output_pdf_file:
                     current_writer.write(output_pdf_file)
                 
@@ -49,7 +55,8 @@ def split_pdf_by_size(input_pdf_path, output_folder, max_size_mb):
             os.remove(temp_output_path)
         
         if len(current_writer.pages) > 0:
-            output_pdf_path = os.path.join(output_folder, f"output_{part_number}.pdf")
+            
+            output_pdf_path = os.path.join(output_folder, f"{input_base_name}_part_{part_number}.pdf")
             with open(output_pdf_path, "wb") as output_pdf_file:
                 current_writer.write(output_pdf_file)
 
@@ -77,14 +84,17 @@ def upload_file():
         clear_output_folder(output_folder)
         split_pdf_by_size(file_path, output_folder, max_size_mb)
         
-        zip_path = os.path.join(app.config['UPLOAD_FOLDER'], 'output.zip')
+        zip_folder_name = f"Splitted_output_{input_base_name}"
+        zip_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{zip_folder_name}.zip")
+        
         with zipfile.ZipFile(zip_path, 'w') as zipf:
             for root, _, files in os.walk(output_folder):
                 for file in files:
                     if not file.startswith('temp_'):
-                        zipf.write(os.path.join(root, file), arcname=file)
+                        file_path_in_zip = os.path.join(zip_folder_name, file)
+                        zipf.write(os.path.join(root, file), arcname=file_path_in_zip)
         
-        return jsonify({'download_url': url_for('download_file', filename='output.zip', _external=True)})
+        return jsonify({'download_url': url_for('download_file', filename=f"{zip_folder_name}.zip", _external=True)})
 
 @app.route('/download/<path:filename>', methods=['GET'])
 def download_file(filename):
