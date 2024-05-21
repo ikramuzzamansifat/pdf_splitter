@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Splitter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>PDF Splitter</h1>
+        <form id="upload-form" action="/upload" method="post" enctype="multipart/form-data">
+            <label for="file">Choose PDF file:</label>
+            <input type="file" id="file" name="file" accept="application/pdf" required>
+            <label for="size">Max size per split (MB):</label>
+            <input type="number" id="size" name="size" min="1" required>
+            <button type="submit">Upload and Split</button>
+        </form>
+        <div id="loading" class="loading-spinner" style="display: none;">
+            <div class="spinner"></div>
+            <p>Processing your request, please wait...</p>
+        </div>
+        <div id="download-link" class="download-link" style="display: none;">
+            <a href="" id="download-url">Download Split PDFs</a>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
