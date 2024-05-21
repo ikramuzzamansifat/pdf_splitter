@@ -26,7 +26,7 @@ This Flask-based web application allows users to upload a large PDF file (Upto 1
     ```
     ##### On Windows
     ```sh
-    python3 -m venv venv
+    python -m venv venv
     venv\Scripts\activate
     ```
 
