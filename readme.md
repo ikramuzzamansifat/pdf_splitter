@@ -15,7 +15,7 @@ This Flask-based web application allows users to upload a large PDF file (Upto 1
 1. Clone the repository:
     ```sh
     git clone https://github.com/ikramuzzamansifat/pdf_splitter.git
-    cd pdf_splitter_app
+    cd pdf_splitter
     ```
 
 2. Create a virtual environment and activate it:
