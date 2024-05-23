@@ -124,6 +124,9 @@ def download_file(filename):
 
 if __name__ == '__main__':
     clear_output_folder(app.config['UPLOAD_FOLDER'])  # Clear the uploads folder when the app starts
+    output_folder = os.path.join(app.config['UPLOAD_FOLDER'], 'output')
+    clear_output_folder(output_folder)
+    
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     app.run(debug=True)
 
