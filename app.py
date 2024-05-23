@@ -81,6 +81,10 @@ def upload_file():
     if file.filename == '':
         return redirect(request.url)
     
+    clear_output_folder(app.config['UPLOAD_FOLDER'])  # Clear the uploads folder when the app starts
+    output_folder = os.path.join(app.config['UPLOAD_FOLDER'], 'output')
+    clear_output_folder(output_folder)
+
     if file:
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -126,7 +130,7 @@ if __name__ == '__main__':
     clear_output_folder(app.config['UPLOAD_FOLDER'])  # Clear the uploads folder when the app starts
     output_folder = os.path.join(app.config['UPLOAD_FOLDER'], 'output')
     clear_output_folder(output_folder)
-    
+
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     app.run(debug=True)
 
