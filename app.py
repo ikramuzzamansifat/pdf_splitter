@@ -1,5 +1,6 @@
 import os
 import zipfile
+import shutil 
 from flask import Flask, render_template, request, send_file, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
 from pypdf import PdfReader, PdfWriter
@@ -10,6 +11,10 @@ app.config['MAX_CONTENT_LENGTH'] = 150 * 1024 * 1024  # Maximum upload size of 1
 input_base_name = ''
 
 
+def delete_folder(folder_path):
+    if os.path.exists(folder_path):
+        shutil.rmtree(folder_path)
+
 def clear_output_folder(folder):
     if os.path.exists(folder):
         for filename in os.listdir(folder):
@@ -18,6 +23,8 @@ def clear_output_folder(folder):
                 os.remove(file_path)
     else:
         os.makedirs(folder, exist_ok=True)
+
+
 
 def split_pdf_by_size(input_pdf_path, output_folder, max_size_mb):
     max_size_bytes = max_size_mb * 1000 * 1000
@@ -100,7 +107,17 @@ def upload_file():
 def download_file(filename):
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     if os.path.exists(file_path):
-        return send_file(file_path, as_attachment=True)
+        response = send_file(file_path, as_attachment=True)
+        
+        # Cleanup: remove the uploaded and generated files
+        original_file_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.splitext(filename.replace('Splitted_output_', ''))[0] + '.pdf')
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        if os.path.exists(original_file_path):
+            os.remove(original_file_path)
+        clear_output_folder(os.path.join(app.config['UPLOAD_FOLDER'], 'output'))
+        clear_output_folder(app.config['UPLOAD_FOLDER'])
+        return response
     else:
         return "File not found", 404
 
