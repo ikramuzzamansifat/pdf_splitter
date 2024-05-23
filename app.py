@@ -28,6 +28,7 @@ def clear_output_folder(folder):
 
 def split_pdf_by_size(input_pdf_path, output_folder, max_size_mb):
     max_size_bytes = max_size_mb * 1000 * 1000
+    clear_output_folder(output_folder)
     os.makedirs(output_folder, exist_ok=True)  # Ensure the output folder exists
 
     global input_base_name
@@ -122,6 +123,7 @@ def download_file(filename):
         return "File not found", 404
 
 if __name__ == '__main__':
+    clear_output_folder(app.config['UPLOAD_FOLDER'])  # Clear the uploads folder when the app starts
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     app.run(debug=True)
 
