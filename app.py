@@ -4,10 +4,11 @@ import shutil
 from flask import Flask, render_template, request, send_file, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
 from pypdf import PdfReader, PdfWriter
+from pypdf.errors import DependencyError
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 150 * 1024 * 1024  # Maximum upload size of 100 MB
+app.config['MAX_CONTENT_LENGTH'] = 250 * 1024 * 1024  # Maximum upload size of 100 MB
 input_base_name = ''
 
 
@@ -34,39 +35,44 @@ def split_pdf_by_size(input_pdf_path, output_folder, max_size_mb):
     global input_base_name
     input_base_name = os.path.splitext(os.path.basename(input_pdf_path))[0]
     
-    with open(input_pdf_path, "rb") as input_pdf_file:
-        pdf_reader = PdfReader(input_pdf_file)
-        total_pages = len(pdf_reader.pages)
-        
-        current_writer = PdfWriter()
-        part_number = 1
-        
-        for page_number in range(total_pages):
-            current_writer.add_page(pdf_reader.pages[page_number])
-            temp_output_path = os.path.join(output_folder, f"temp_{part_number}.pdf")
-            with open(temp_output_path, "wb") as temp_output_file:
-                current_writer.write(temp_output_file)
+    try:
+        with open(input_pdf_path, "rb") as input_pdf_file:
+            pdf_reader = PdfReader(input_pdf_file)
+            total_pages = len(pdf_reader.pages)
             
-            current_size = os.path.getsize(temp_output_path)
+            current_writer = PdfWriter()
+            part_number = 1
             
-            if current_size > max_size_bytes:
-                current_writer.remove_page(len(current_writer.pages) - 1)
+            for page_number in range(total_pages):
+                current_writer.add_page(pdf_reader.pages[page_number])
+                temp_output_path = os.path.join(output_folder, f"temp_{part_number}.pdf")
+                with open(temp_output_path, "wb") as temp_output_file:
+                    current_writer.write(temp_output_file)
+                
+                current_size = os.path.getsize(temp_output_path)
+                
+                if current_size > max_size_bytes:
+                    current_writer.remove_page(len(current_writer.pages) - 1)
 
+                    output_pdf_path = os.path.join(output_folder, f"{input_base_name}_part_{part_number}.pdf")
+                    with open(output_pdf_path, "wb") as output_pdf_file:
+                        current_writer.write(output_pdf_file)
+                    
+                    part_number += 1
+                    current_writer = PdfWriter()
+                    current_writer.add_page(pdf_reader.pages[page_number])
+                    
+                os.remove(temp_output_path)
+            
+            if len(current_writer.pages) > 0:
+                
                 output_pdf_path = os.path.join(output_folder, f"{input_base_name}_part_{part_number}.pdf")
                 with open(output_pdf_path, "wb") as output_pdf_file:
                     current_writer.write(output_pdf_file)
-                
-                part_number += 1
-                current_writer = PdfWriter()
-                current_writer.add_page(pdf_reader.pages[page_number])
-                
-            os.remove(temp_output_path)
-        
-        if len(current_writer.pages) > 0:
-            
-            output_pdf_path = os.path.join(output_folder, f"{input_base_name}_part_{part_number}.pdf")
-            with open(output_pdf_path, "wb") as output_pdf_file:
-                current_writer.write(output_pdf_file)
+    except DependencyError as e:
+        print(f"Dependency error: {e}. Ensure that the 'cryptography' package is installed.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
 @app.route('/', methods=['GET'])
 def index():
